@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ShopEasy — Premium Store</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo">Shop<span>Easy</span></a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="cart.html" class="cart-btn">
+      🛒 Cart <span id="cart-count">0</span>
+    </a>
+    <div id="nav-auth"></div>
+    <div id="nav-admin" style="display:none;">
+      <a href="admin.html" style="color:var(--gold)!important;">⚡ Admin</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-tag">✦ New Arrivals 2025</div>
+  <h1>Shop the <em>Finest</em><br/>Products Online</h1>
+  <p>Discover thousands of premium products with fast delivery and unbeatable prices.</p>
+  <div class="hero-btns">
+    <a href="#products" class="btn btn-primary">Explore Products →</a>
+    <a href="register.html" class="btn btn-ghost">Create Account</a>
+  </div>
+</section>
+
+<div class="container section" id="products">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <h2 class="section-title">All Products</h2>
+      <p class="section-sub" style="margin-bottom:0;">Browse our entire collection</p>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input type="text" id="search-input" placeholder="Search products..." oninput="searchProducts()" />
+    </div>
+    <select class="filter-select" id="category-filter" onchange="searchProducts()">
+      <option value="">All Categories</option>
+      <option value="electronics">Electronics</option>
+      <option value="clothing">Clothing</option>
+      <option value="books">Books</option>
+      <option value="home">Home & Living</option>
+      <option value="sports">Sports</option>
+      <option value="general">General</option>
+    </select>
+  </div>
+
+  <div class="products-grid" id="products-grid"></div>
+</div>
+
+<footer style="border-top:1px solid var(--border);padding:2rem;text-align:center;color:var(--text3);font-size:0.85rem;margin-top:3rem;">
+  © 2025 ShopEasy. Built with ❤️ for learning.
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/products.js"></script>
+<script>
+  updateNavbar();
+  updateCartCount();
+  loadProducts();
+</script>
+</body>
+</html>

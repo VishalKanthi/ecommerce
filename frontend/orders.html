@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Orders — ShopEasy</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<nav>
+  <a href="/index.html" class="logo">Shop<span>Easy</span></a>
+  <div class="nav-links">
+    <a href="/index.html">Home</a>
+    <a href="/cart.html" class="cart-btn">🛒 <span id="cart-count">0</span></a>
+    <div id="nav-auth"></div>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="page-header">
+    <h1>My Orders</h1>
+    <p>Track all your purchases</p>
+  </div>
+  <div id="orders-container">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1rem;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:1rem;">
+        <div class="skeleton" style="height:14px;width:150px;"></div>
+        <div class="skeleton" style="height:26px;width:80px;border-radius:100px;"></div>
+      </div>
+      <div class="skeleton" style="height:12px;width:80%;margin-bottom:0.8rem;"></div>
+      <div class="skeleton" style="height:12px;width:50%;"></div>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/order.js"></script>
+<script>
+  if (!isLoggedIn()) window.location.href = "login.html";
+  updateNavbar();
+  updateCartCount();
+
+  const loadOrders = async () => {
+    try {
+      const orders = await orderAPI.getMyOrders();
+      renderOrders(orders);
+    } catch (err) {
+      document.getElementById("orders-container").innerHTML = `
+        <div class="empty-state">
+          <div class="icon">⚠️</div>
+          <h3>Failed to load orders</h3>
+          <p>${err.message}</p>
+        </div>`;
+    }
+  };
+  loadOrders();
+</script>
+</body>
+</html>
+

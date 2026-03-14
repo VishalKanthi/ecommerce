@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Product — ShopEasy</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<nav>
+  <a href="/index.html" class="logo">Shop<span>Easy</span></a>
+  <div class="nav-links">
+    <a href="/index.html">Home</a>
+    <a href="/cart.html" class="cart-btn">🛒 <span id="cart-count">0</span></a>
+    <div id="nav-auth"></div>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="breadcrumb">
+    <a href="/index.html">Home</a> › <span id="bc-name">Product</span>
+  </div>
+  <div id="product-detail">
+    <div class="product-detail-grid">
+      <div class="skeleton" style="aspect-ratio:1;border-radius:var(--radius-lg);"></div>
+      <div style="display:flex;flex-direction:column;gap:1rem;padding-top:1rem;">
+        <div class="skeleton" style="height:14px;width:80px;"></div>
+        <div class="skeleton" style="height:36px;width:90%;"></div>
+        <div class="skeleton" style="height:80px;"></div>
+        <div class="skeleton" style="height:32px;width:120px;"></div>
+        <div class="skeleton" style="height:52px;border-radius:var(--radius);margin-top:1rem;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/cart.js"></script>
+<script>
+  updateNavbar();
+  updateCartCount();
+
+  const loadProduct = async () => {
+    const id = new URLSearchParams(window.location.search).get("id");
+    if (!id) { window.location.href = "index.html"; return; }
+    try {
+      const p = await productAPI.getOne(id);
+      document.title = `${p.name} — ShopEasy`;
+      document.getElementById("bc-name").textContent = p.name;
+      const inStock = p.stock > 0;
+      document.getElementById("product-detail").innerHTML = `
+        <div class="product-detail-grid">
+          <div class="product-detail-img">
+            <img src="${p.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80'}" alt="${p.name}" />
+          </div>
+          <div class="product-detail-info">
+            <div class="category-tag">✦ ${p.category || 'General'}</div>
+            <h1>${p.name}</h1>
+            <p class="desc">${p.description || 'A high quality product available on ShopEasy.'}</p>
+            <div class="divider"></div>
+            <div class="price-row">
+              <div class="price-big">₹${p.price.toLocaleString('en-IN')}</div>
+              <span class="stock-pill ${inStock ? 'in' : 'out'}">
+                ${inStock ? '● In Stock (' + p.stock + ')' : '✕ Out of Stock'}
+              </span>
+            </div>
+            <div class="divider"></div>
+            ${inStock ? `
+              <button class="btn btn-primary" style="font-size:1rem;padding:0.9rem 2rem;"
+                onclick="addToCart({_id:'${p._id}',name:'${p.name}',price:${p.price},image:'${p.image||''}'})">
+                🛒 Add to Cart
+              </button>
+              <button class="btn btn-ghost" style="margin-top:0.5rem;"
+                onclick="addToCart({_id:'${p._id}',name:'${p.name}',price:${p.price},image:'${p.image||''}'}); setTimeout(()=>window.location.href='/cart.html',400)">
+                Buy Now →
+              </button>` : `
+              <button class="btn btn-surface" disabled style="cursor:not-allowed;opacity:0.5;">Out of Stock</button>`
+            }
+            <a href="/index.html" style="color:var(--text3);font-size:0.85rem;text-decoration:none;margin-top:0.5rem;display:inline-block;">
+              ← Back to all products
+            </a>
+          </div>
+        </div>`;
+    } catch (err) {
+      document.getElementById("product-detail").innerHTML = `
+        <div class="empty-state">
+          <div class="icon">😕</div>
+          <h3>Product not found</h3>
+          <p>${err.message}</p>
+          <a href="/index.html" class="btn btn-primary">Back to Store</a>
+        </div>`;
+    }
+  };
+  loadProduct();
+</script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Checkout — ShopEasy</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<nav>
+  <a href="/index.html" class="logo">Shop<span>Easy</span></a>
+  <div class="nav-links">
+    <a href="/cart.html">← Back to Cart</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="page-header">
+    <h1>Checkout</h1>
+    <p>Almost there! Fill in your delivery details</p>
+  </div>
+
+  <div class="cart-layout">
+    <div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem;">
+        <h3 style="font-family:'Playfair Display',serif;margin-bottom:1.5rem;">Delivery Address</h3>
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="full-name" placeholder="John Doe"/>
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" id="phone" placeholder="+91 98765 43210"/>
+        </div>
+        <div class="form-group">
+          <label>Address Line</label>
+          <input type="text" id="address-line" placeholder="Street, Area, Landmark"/>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label>City</label>
+            <input type="text" id="city" placeholder="Chennai"/>
+          </div>
+          <div class="form-group">
+            <label>PIN Code</label>
+            <input type="text" id="pincode" placeholder="600001"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>State</label>
+          <input type="text" id="state" placeholder="Tamil Nadu"/>
+        </div>
+        <div class="error-msg" id="error-msg"></div>
+        <div class="success-msg" id="success-msg"></div>
+      </div>
+      <div style="background:rgba(255,107,53,0.05);border:1px solid rgba(255,107,53,0.15);border-radius:var(--radius-lg);padding:1.2rem;margin-top:1rem;display:flex;gap:0.8rem;align-items:center;">
+        <span style="font-size:1.5rem;">💳</span>
+        <div>
+          <div style="font-weight:600;font-size:0.9rem;">Cash on Delivery</div>
+          <div style="color:var(--text3);font-size:0.82rem;margin-top:0.2rem;">Pay when your order arrives. Online payment coming soon!</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="summary-card">
+        <h3>Order Summary</h3>
+        <div id="checkout-items" style="margin-bottom:1rem;"></div>
+        <div class="summary-row"><span>Subtotal</span><span id="subtotal">₹0</span></div>
+        <div class="summary-row"><span>Shipping</span><span id="shipping-cost">₹49</span></div>
+        <div class="summary-row total"><span>Total</span><span id="grand-total">₹0</span></div>
+        <button class="btn btn-primary btn-full" style="margin-top:1.5rem;padding:1rem;font-size:1rem;"
+          onclick="placeOrder()" id="order-btn">
+          Place Order ✓
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/cart.js"></script>
+<script>
+  if (!isLoggedIn()) window.location.href = "login.html";
+  const cart = getCart();
+  if (!cart.length) window.location.href = "cart.html";
+
+  const user = getUser();
+  if (user) document.getElementById("full-name").value = user.name;
+
+  const total = getCartTotal();
+  const shipping = total > 500 ? 0 : 49;
+  const grandTotal = total + shipping;
+
+  document.getElementById("checkout-items").innerHTML = cart.map(i =>
+    `<div class="summary-row" style="margin-bottom:0.5rem;">
+      <span style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${i.name} ×${i.quantity}</span>
+      <span>₹${(i.price*i.quantity).toLocaleString('en-IN')}</span>
+    </div>`).join('');
+
+  document.getElementById("subtotal").textContent = `₹${total.toLocaleString('en-IN')}`;
+  document.getElementById("shipping-cost").innerHTML = shipping===0
+    ? '<span style="color:var(--success)">FREE</span>' : `₹${shipping}`;
+  document.getElementById("grand-total").textContent = `₹${grandTotal.toLocaleString('en-IN')}`;
+
+  const placeOrder = async () => {
+    const name = document.getElementById("full-name").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const addressLine = document.getElementById("address-line").value.trim();
+    const city = document.getElementById("city").value.trim();
+    const pincode = document.getElementById("pincode").value.trim();
+    const state = document.getElementById("state").value.trim();
+    const errorEl = document.getElementById("error-msg");
+    const successEl = document.getElementById("success-msg");
+    const btn = document.getElementById("order-btn");
+
+    errorEl.className = "error-msg";
+    if (!name || !phone || !addressLine || !city || !pincode || !state) {
+      errorEl.textContent = "Please fill in all delivery details";
+      errorEl.className = "error-msg show"; return;
+    }
+
+    const fullAddress = `${name}, ${phone}, ${addressLine}, ${city} - ${pincode}, ${state}`;
+    btn.textContent = "Placing order..."; btn.disabled = true;
+
+    try {
+      const cartItems = cart.map(i => ({ productId: i.productId, quantity: i.quantity }));
+      const validated = await cartAPI.validate(cartItems);
+      await orderAPI.create({ items: validated.items, address: fullAddress });
+      clearCart();
+      successEl.textContent = "🎉 Order placed successfully!";
+      successEl.className = "success-msg show";
+      btn.textContent = "Order Placed ✓";
+      setTimeout(() => window.location.href = "orders.html", 1500);
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.className = "error-msg show";
+      btn.textContent = "Place Order ✓"; btn.disabled = false;
+    }
+  };
+</script>
+</body>
+</html>

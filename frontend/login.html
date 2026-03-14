@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — ShopEasy</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="logo">Shop<span>Easy</span></a>
+  <div class="nav-links">
+    <a href="index.html">← Back to Store</a>
+  </div>
+</nav>
+
+<div class="page-center">
+  <div class="form-card">
+    <h2>Welcome back</h2>
+    <p class="subtitle">Sign in to your account to continue shopping</p>
+    <div class="error-msg" id="error-msg"></div>
+    <div class="form-group">
+      <label>Email address</label>
+      <input type="email" id="email" placeholder="you@example.com"/>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Enter your password"
+        onkeydown="if(event.key==='Enter') handleLogin()"/>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="handleLogin()" id="login-btn">
+      Sign In →
+    </button>
+    <div class="form-divider">or</div>
+    <p style="text-align:center;font-size:0.88rem;color:var(--text2);">
+      Don't have an account?
+      <a href="register.html" style="color:var(--accent);font-weight:600;">Create one free</a>
+    </p>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script>
+  if (isLoggedIn()) window.location.href = "index.html";
+
+  const handleLogin = async () => {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const errorEl = document.getElementById("error-msg");
+    const btn = document.getElementById("login-btn");
+    errorEl.className = "error-msg";
+    if (!email || !password) {
+      errorEl.textContent = "Please fill in all fields";
+      errorEl.className = "error-msg show"; return;
+    }
+    btn.textContent = "Signing in..."; btn.disabled = true;
+    try {
+      const data = await authAPI.login({ email, password });
+      saveUser(data);
+      window.location.href = "index.html";
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.className = "error-msg show";
+      btn.textContent = "Sign In →"; btn.disabled = false;
+    }
+  };
+</script>
+</body>
+</html>
