@@ -1,15 +1,15 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const User = require("../models/User");
+const { sendOrderConfirmationEmail, sendOrderStatusEmail } = require("../utils/emailService"); // ← ADD
 
-// POST /api/orders
 const createOrder = async (req, res) => {
   try {
     const { items, address } = req.body;
-
     let total = 0;
+
     for (const item of items) {
       total += item.price * item.quantity;
-      // Reduce stock
       await Product.findByIdAndUpdate(item.product, {
         $inc: { stock: -item.quantity }
       });
@@ -22,13 +22,16 @@ const createOrder = async (req, res) => {
       address
     });
 
+    // ── Send order confirmation email ──
+    const user = await User.findById(req.user.id);
+    sendOrderConfirmationEmail(user.email, user.name, order); // ← ADD
+
     res.status(201).json(order);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// GET /api/orders/myorders
 const getMyOrders = async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
@@ -38,7 +41,6 @@ const getMyOrders = async (req, res) => {
   }
 };
 
-// GET /api/orders (admin only)
 const getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find().populate("user", "name email").sort({ createdAt: -1 });
@@ -48,14 +50,24 @@ const getAllOrders = async (req, res) => {
   }
 };
 
-// PUT /api/orders/:id/status (admin only)
 const updateOrderStatus = async (req, res) => {
   try {
     const order = await Order.findByIdAndUpdate(
       req.params.id,
       { status: req.body.status },
       { new: true }
-    );
+    ).populate("user", "name email");
+
+    // ── Send status update email ──
+    if (order.user) {
+      sendOrderStatusEmail(
+        order.user.email,
+        order.user.name,
+        order._id.toString(),
+        req.body.status
+      ); // ← ADD
+    }
+
     res.json(order);
   } catch (error) {
     res.status(500).json({ message: error.message });

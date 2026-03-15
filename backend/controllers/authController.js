@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { sendWelcomeEmail } = require("../utils/emailService"); // ← ADD THIS
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -10,16 +11,17 @@ const generateToken = (user) => {
   );
 };
 
-// POST /api/auth/register
 const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-
     const exists = await User.findOne({ email });
     if (exists) return res.status(400).json({ message: "Email already exists" });
 
     const hashed = await bcrypt.hash(password, 10);
     const user = await User.create({ name, email, password: hashed });
+
+    // ── Send welcome email ──
+    sendWelcomeEmail(email, name); // ← ADD THIS
 
     res.status(201).json({
       _id: user._id,
@@ -33,11 +35,9 @@ const register = async (req, res) => {
   }
 };
 
-// POST /api/auth/login
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
@@ -56,7 +56,6 @@ const login = async (req, res) => {
   }
 };
 
-// GET /api/auth/me
 const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
