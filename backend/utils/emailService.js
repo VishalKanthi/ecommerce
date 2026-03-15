@@ -1,21 +1,17 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
-// Create transporter
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS
-  }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
+const FROM_EMAIL = "onboarding@resend.dev"; // free tier sender
+const STORE_NAME = process.env.STORE_NAME || "ShopEasy";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5500";
 
 // ── Welcome Email ──
 const sendWelcomeEmail = async (to, name) => {
   try {
-    await transporter.sendMail({
-      from: `"${process.env.STORE_NAME}" <${process.env.GMAIL_USER}>`,
+    await resend.emails.send({
+      from: `${STORE_NAME} <${FROM_EMAIL}>`,
       to,
-      subject: `Welcome to ${process.env.STORE_NAME}! 🎉`,
+      subject: `Welcome to ${STORE_NAME}! 🎉`,
       html: `
         <div style="font-family:'Segoe UI',sans-serif;max-width:600px;margin:0 auto;background:#0a0a0f;color:#f0f0f8;border-radius:12px;overflow:hidden;">
           <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:40px;text-align:center;">
@@ -28,13 +24,13 @@ const sendWelcomeEmail = async (to, name) => {
               Start exploring our premium collection of products.
             </p>
             <div style="text-align:center;margin:30px 0;">
-              <a href="${process.env.FRONTEND_URL}"
+              <a href="${FRONTEND_URL}"
                 style="background:#ff6b35;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:1rem;">
                 Start Shopping →
               </a>
             </div>
             <p style="color:#5a5a72;font-size:0.85rem;text-align:center;">
-              © 2025 ShopEasy. All rights reserved.
+              © 2025 ${STORE_NAME}. All rights reserved.
             </p>
           </div>
         </div>
@@ -57,8 +53,8 @@ const sendOrderConfirmationEmail = async (to, name, order) => {
       </tr>
     `).join('');
 
-    await transporter.sendMail({
-      from: `"${process.env.STORE_NAME}" <${process.env.GMAIL_USER}>`,
+    await resend.emails.send({
+      from: `${STORE_NAME} <${FROM_EMAIL}>`,
       to,
       subject: `Order Confirmed! #${order._id.toString().slice(-8).toUpperCase()} 🎉`,
       html: `
@@ -70,12 +66,10 @@ const sendOrderConfirmationEmail = async (to, name, order) => {
           <div style="padding:40px;">
             <h2 style="color:#4ade80;">✓ Order Placed Successfully!</h2>
             <p style="color:#9090a8;">Hi ${name}, your order has been confirmed.</p>
-
             <div style="background:#16161f;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:20px;margin:20px 0;">
               <p style="color:#9090a8;margin:0 0 5px;font-size:0.85rem;">ORDER ID</p>
               <p style="color:#ff6b35;font-weight:700;margin:0;font-family:monospace;">#${order._id.toString().slice(-8).toUpperCase()}</p>
             </div>
-
             <table style="width:100%;border-collapse:collapse;">
               <thead>
                 <tr style="border-bottom:1px solid #1a1a24;">
@@ -92,21 +86,18 @@ const sendOrderConfirmationEmail = async (to, name, order) => {
                 </tr>
               </tfoot>
             </table>
-
             <div style="background:#16161f;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:20px;margin:20px 0;">
               <p style="color:#9090a8;margin:0 0 5px;font-size:0.85rem;">DELIVERY ADDRESS</p>
               <p style="color:#f0f0f8;margin:0;">${order.address}</p>
             </div>
-
             <div style="text-align:center;margin:30px 0;">
-              <a href="${process.env.FRONTEND_URL}/orders.html"
+              <a href="${FRONTEND_URL}/orders.html"
                 style="background:#ff6b35;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;">
                 Track My Order →
               </a>
             </div>
-
             <p style="color:#5a5a72;font-size:0.85rem;text-align:center;">
-              © 2025 ShopEasy. All rights reserved.
+              © 2025 ${STORE_NAME}. All rights reserved.
             </p>
           </div>
         </div>
@@ -121,36 +112,20 @@ const sendOrderConfirmationEmail = async (to, name, order) => {
 // ── Order Status Update Email ──
 const sendOrderStatusEmail = async (to, name, orderId, status) => {
   const statusMessages = {
-    shipped: {
-      emoji: "🚚",
-      title: "Your Order is on the Way!",
-      message: "Your order has been shipped and is on its way to you.",
-      color: "#60a5fa"
-    },
-    delivered: {
-      emoji: "✅",
-      title: "Order Delivered!",
-      message: "Your order has been delivered successfully. Enjoy your purchase!",
-      color: "#4ade80"
-    },
-    cancelled: {
-      emoji: "❌",
-      title: "Order Cancelled",
-      message: "Your order has been cancelled. Contact us if you have any questions.",
-      color: "#f87171"
-    }
+    shipped: { emoji: "🚚", title: "Your Order is on the Way!", message: "Your order has been shipped and is on its way to you.", color: "#60a5fa" },
+    delivered: { emoji: "✅", title: "Order Delivered!", message: "Your order has been delivered successfully. Enjoy your purchase!", color: "#4ade80" },
+    cancelled: { emoji: "❌", title: "Order Cancelled", message: "Your order has been cancelled. Contact us if you have any questions.", color: "#f87171" }
   };
 
   const statusInfo = statusMessages[status] || {
-    emoji: "📦",
-    title: "Order Update",
+    emoji: "📦", title: "Order Update",
     message: `Your order status has been updated to: ${status}`,
     color: "#ff6b35"
   };
 
   try {
-    await transporter.sendMail({
-      from: `"${process.env.STORE_NAME}" <${process.env.GMAIL_USER}>`,
+    await resend.emails.send({
+      from: `${STORE_NAME} <${FROM_EMAIL}>`,
       to,
       subject: `${statusInfo.emoji} Order #${orderId.slice(-8).toUpperCase()} - ${statusInfo.title}`,
       html: `
@@ -162,22 +137,17 @@ const sendOrderStatusEmail = async (to, name, orderId, status) => {
             <div style="font-size:4rem;margin-bottom:20px;">${statusInfo.emoji}</div>
             <h2 style="color:${statusInfo.color};">${statusInfo.title}</h2>
             <p style="color:#9090a8;line-height:1.7;">Hi ${name}, ${statusInfo.message}</p>
-
-            <div style="background:#16161f;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:20px;margin:20px 0;display:inline-block;">
+            <div style="background:#16161f;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:20px;margin:20px auto;display:inline-block;">
               <p style="color:#9090a8;margin:0 0 5px;font-size:0.85rem;">ORDER ID</p>
               <p style="color:#ff6b35;font-weight:700;margin:0;font-family:monospace;">#${orderId.slice(-8).toUpperCase()}</p>
             </div>
-
             <div style="margin:30px 0;">
-              <a href="${process.env.FRONTEND_URL}/orders.html"
+              <a href="${FRONTEND_URL}/orders.html"
                 style="background:#ff6b35;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;">
                 View My Orders →
               </a>
             </div>
-
-            <p style="color:#5a5a72;font-size:0.85rem;">
-              © 2025 ShopEasy. All rights reserved.
-            </p>
+            <p style="color:#5a5a72;font-size:0.85rem;">© 2025 ${STORE_NAME}. All rights reserved.</p>
           </div>
         </div>
       `
